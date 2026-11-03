@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,6 +18,14 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000"
     ollama_url: str = "http://localhost:11434"
     ollama_model: str = "qwen2.5:7b-instruct"
+
+    @field_validator("database_url")
+    @classmethod
+    def use_psycopg_driver(cls, value: str) -> str:
+        """Render supplies a generic Postgres URL; Atlas uses the installed psycopg v3 driver."""
+        if value.startswith("postgresql://"):
+            return value.replace("postgresql://", "postgresql+psycopg://", 1)
+        return value
 
     @property
     def origins(self) -> list[str]:
